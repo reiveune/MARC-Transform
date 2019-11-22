@@ -7,7 +7,7 @@ use Carp;
 use MARC::Record;
 use YAML;
 use Scalar::Util qw< reftype >;
-our $VERSION = '0.003006';
+our $VERSION = '0.003008';
 our $DEBUG = 0;
 sub debug { $DEBUG and say STDERR @_ }
 
@@ -26,13 +26,21 @@ sub new {
     my @yaml;
     no warnings 'redefine';
     no warnings 'newline';
+    my $yamltoload;
     if ( -e $yaml ) {
         open my $yamls, "< $yaml" or die "can't open file: $!";
-        @yaml = YAML::LoadFile($yamls);
+        my $yamlline;
+        while ($yamlline = <$yamls>){ $yamltoload.=$yamlline; }
+        close $yamls;
+        #@yaml = YAML::LoadFile($yamls);
     }
     else {
-        @yaml = YAML::Load($yaml);
+        $yamltoload=$yaml;
+        #@yaml = YAML::Load($yaml);
     }
+    $yamltoload=~s/#_dollars_#/\\#_dollars_\\#/g;
+    $yamltoload=~s/#_dbquote_#/\\#_dbquote_\\#/g;
+    @yaml = YAML::Load($yamltoload);
     #warn "================". Data::Dumper::Dumper (\@yaml)."------------------";
     $record=$recordsource;
     $mth=$mthsource;
@@ -828,7 +836,7 @@ sub testrule {
                 $globalconditionint.="\n".'for $f'.$tag.' ( $record->field("'.$tag.'") ) {'."\n".'$currentfield=\$f'.$tag.';'."\n";
                 foreach my $subtag (@tag_listtagunique) {
                     $boolsubtagrule=1;
-                    if ($subtag ne "tempvalueforcurrentfield" and $tag > "010") {
+                    if ($subtag ne "tempvalueforcurrentfield" and $tag >= "010") {
                         $globalconditionint.='for $f'.$tag.$subtag.' ( $f'.$tag.'->subfield("'.$subtag.'"), my $tmpintesta=1 ) { my $tmpintestb=0; if ($tmpintesta==1) { $tmpintesta=undef;$tmpintestb=1; }'."\n";
                         $globalconditionint.='if ('.$condition.') {$boolcond=1;$boolcondint=1; eval{'.$actionsin.'}}else{$boolcondint=0 unless (!defined($tmpintesta) and $tmpintestb==0 );}'."\n";
                         $globalconditionend.='}'."\n";
@@ -906,7 +914,7 @@ MARC::Transform - Perl module to transform a MARC record using a YAML configurat
 
 =head1 VERSION
 
-Version 0.003006
+Version 0.003008
 
 =head1 SYNOPSIS
 
@@ -2182,7 +2190,7 @@ Stephane Delaune, (delaune.stephane at gmail.com)
 
 =head1 COPYRIGHT
 
-Copyright 2011-2014 Stephane Delaune for Biblibre.com, all rights reserved.
+Copyright 2011-2019 Stephane Delaune for Biblibre.com, all rights reserved.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
@@ -2197,7 +2205,7 @@ MARC::Transform - Module Perl pour transformer une notice MARC en utilisant un f
 
 =head1 - VERSION
 
-Version 0.003006
+Version 0.003008
 
 =head1 - SYNOPSIS
 
@@ -3472,7 +3480,7 @@ Stéphane Delaune, (delaune.stephane at gmail.com)
 
 =head1 - COPYRIGHT
 
-Copyright 2011-2014 Stephane Delaune for Biblibre.com, all rights reserved.
+Copyright 2011-2019 Stephane Delaune for Biblibre.com, all rights reserved.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
